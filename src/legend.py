@@ -1,4 +1,5 @@
 import json
+from PIL import Image, ImageFilter
 
 class Legend:
     def get_class(self, p):
@@ -10,17 +11,18 @@ class Legend:
         return cls
 
     def describe(self, c):
-        """Returns a human-readable label of an input class using the legend.""" 
-        desc = 'UNKNOWN_DESC'
+        """Returns a human-readable label of an input class using the legend."""
+        desc = 'U'
         if str(c) in self.desc:
             desc = self.desc[str(c)]
         return desc
 
-    def __init__(self, im=None):
+    def __init__(self, ims_lst=None):
         self.classes = {}
         self.desc = {}
-        if im:
-            uniques = Legend.get_unique_pixels(im)
+        if ims_lst and len(ims_lst) > 0:
+            uniques = Legend.get_unique_pixels(ims_lst)
+            print(uniques)
             class_ind = 0
             for p in uniques:
                 single_im = Image.new(mode="RGBA", size=(100, 100), color=p)
@@ -62,12 +64,15 @@ class Legend:
             file.write(json.dumps(vars(self)))
 
     @staticmethod
-    def get_unique_pixels(im):
+    def get_unique_pixels(ims_lst):
         """Returns a dict of all pixel tuples (k) and their counts (v)."""
         uniques = {}
-        for p in im.getdata():
-            if p in uniques:
-                uniques[p] += 1
-            else:
-                uniques[p] = 1
+        for im in ims_lst:
+            for p in im.getdata():
+                if p[3] == 0:  # Ignore fully transparent
+                    pass
+                elif p in uniques:
+                    uniques[p] += 1
+                else:
+                    uniques[p] = 1
         return uniques
